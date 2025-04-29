@@ -104,7 +104,8 @@ jobs:
             BRANCH=${{ github.ref_name }}            
             IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:${BRANCH}
             
-            cat <<'EOF' > docker-compose.yml
+            # sudo로 compose 파일 덮어쓰기
+            cat <<'EOF' | sudo tee docker-compose.yml >/dev/null
             ${{ secrets.DOCKER_COMPOSE_YML }}
             EOF
             
