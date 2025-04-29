@@ -85,6 +85,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: 이미지 테그 디버깅
+        run: echo "IMAGE TAG = '${{ needs.build.outputs.image-tag }}'"
+
       - name: Checkout
         uses: actions/checkout@v4
 
