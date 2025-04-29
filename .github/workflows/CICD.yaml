@@ -12,7 +12,7 @@ jobs:
 
     # deploy job에 전달할 출력값
     outputs:
-      image-tag: ${{ steps.meta.outputs.image_tag }}
+      image-tag: ${{ steps.meta.outputs['image-tag'] }}
 
     steps:
       # 1. 소스 체크아웃
@@ -78,7 +78,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ needs.build.outputs['image-tag'] }}
+          tags: ${{ steps.meta.outputs['image-tag'] }}
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/stroysoksok-back:cache
           cache-to: type=inline
 
