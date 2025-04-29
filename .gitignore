@@ -35,3 +35,14 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Develop Application Yml ###
+/src/main/resources/application-dev.yml
+/src/main/resources/application-prod.yml
+/src/main/resources/oauth2.yml
+
+### ENV ###
+.env
+
+### DOCKET-COMPOSE ###
+docker-compose.yml
