@@ -1,28 +1,13 @@
-FROM openjdk:17 AS builder
-VOLUME /tmp
+FROM openjdk:17-jdk-slim
 
-COPY ./gradlew .
-# gradlew 복사
-COPY ./gradle gradle
-# gradle 복사
-COPY ./build.gradle .
-# build.gradle 복사
-COPY ./settings.gradle .
-# settings.gradle 복사
-COPY ./src src
-# 웹 어플리케이션 소스 복사
-RUN chmod +x ./gradlew
-# gradlew 실행권한 부여
-RUN microdnf install findutils
+# 작업 디렉토리 설정
+WORKDIR /app
 
-RUN ./gradlew bootJar
-# gradlew를 사용하여 실행 가능한 jar 파일 생성
+# 빌드된 JAR 파일을 복사
+COPY build/libs/backend-0.0.1-SNAPSHOT.jar /app.jar
 
-FROM openjdk:17
-COPY --from=builder build/libs/*.jar app.jar
-# builder 이미지에서 build/libs/*.jar 파일을 app.jar로 복사
+# 애플리케이션 실행 (기본 Spring Boot 설정)
+ENTRYPOINT ["java", "-jar", "/app.jar"]
 
-COPY src/main/resources/keystore.p12 /app/keystore.p12
-
+# Spring Boot 서버 포트 노출
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
