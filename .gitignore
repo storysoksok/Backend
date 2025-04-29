@@ -43,3 +43,6 @@ out/
 
 ### ENV ###
 .env
+
+### DOCKET-COMPOSE ###
+docker-compose.yml
