@@ -103,12 +103,12 @@ jobs:
             set -e
             cd ~/backend
             IMAGE="${{ needs.build.outputs.image-tag }}"
-  
+            
             echo "Pull new image $IMAGE"
-            docker pull $IMAGE
-  
+            docker pull "$IMAGE"
+            
             echo "Recreate container"
-            IMAGE=$IMAGE docker compose up -d --remove-orphans
+            IMAGE="$IMAGE" docker compose up -d --remove-orphans
   
             echo "Prune old images"
             docker image prune -f
