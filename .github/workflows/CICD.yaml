@@ -85,16 +85,13 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy
-        uses: appleboy/ssh-action@v1.0.3
-
       - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts        
 
       - name: Upload compose & env
-        uses: appleboy/scp-action@v1.0.3
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
