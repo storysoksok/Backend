@@ -110,7 +110,7 @@ jobs:
             EOF
             
             echo "Stopping running containers..."
-            docker-compose down --volumes --rmi all
+            IMAGE="$IMAGE" docker compose up -d --build
             
             echo "도커 이미지 풀 : ${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:${BRANCH}"
             docker pull $IMAGE
