@@ -103,7 +103,11 @@ jobs:
             cd ~/backend
             BRANCH=${{ github.ref_name }}            
             IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:${BRANCH}
-
+            
+            cat <<'EOF' > docker-compose.yml
+            ${{ secrets.DOCKER_COMPOSE_YML }}
+            EOF
+            
             echo "Stopping running containers..."
             docker-compose down --volumes --rmi all
             
