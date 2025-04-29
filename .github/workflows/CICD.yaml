@@ -103,13 +103,16 @@ jobs:
             cd ~/backend
             BRANCH=${{ github.ref_name }}            
             IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:${BRANCH}
+
+            echo "Stopping running containers..."
+            docker-compose down --volumes --rmi all
             
             echo "도커 이미지 풀 : ${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:${BRANCH}"
             docker pull $IMAGE
             
-            echo "Recreate container"
-            IMAGE="$IMAGE" docker compose up -d --remove-orphans
-            
+            echo "Starting new containers with docker-compose..."
+            docker-compose up -d --build
+                        
             # <none> 태그로 남은 이미지 정리
             echo "불필요한 dangling(<none>) 이미지 정리..."
             docker image prune -af
