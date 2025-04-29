@@ -49,9 +49,11 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build -x test -Dspring.profiles.active=prod
 
-      - name: Set image tag (커밋 해시 이용)
+      - name: Set image tag
         id: meta
-        run: echo "image-tag=${{ secrets.DOCKERHUB_USERNAME }}/stroysoksok-back:${{ github.sha }}" >> $GITHUB_OUTPUT
+        run: |
+          TAG="${{ secrets.DOCKERHUB_USERNAME }}/stroysoksok-back:${{ github.sha }}"
+          echo "image-tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Docker 빌드환경 설정
         uses: docker/setup-buildx-action@v3
