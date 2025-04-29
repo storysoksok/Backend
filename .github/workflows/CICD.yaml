@@ -90,8 +90,6 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts        
 
-
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -113,7 +111,7 @@ jobs:
             docker pull $IMAGE
             
             echo "Stopping running containers..."
-            IMAGE="$IMAGE" docker compose up -d --build            
+            IMAGE="$IMAGE" docker-compose up -d --build            
                                     
             # <none> 태그로 남은 이미지 정리
             echo "불필요한 dangling(<none>) 이미지 정리..."
