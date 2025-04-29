@@ -78,7 +78,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.image-tag }}
+          tags: ${{ needs.build.outputs['image-tag'] }}
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/stroysoksok-back:cache
           cache-to: type=inline
 
