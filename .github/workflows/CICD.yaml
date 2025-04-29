@@ -108,16 +108,13 @@ jobs:
             cat <<'EOF' | sudo tee docker-compose.yml >/dev/null
             ${{ secrets.DOCKER_COMPOSE_YML }}
             EOF
-            
-            echo "Stopping running containers..."
-            IMAGE="$IMAGE" docker compose up -d --build
-            
+                        
             echo "도커 이미지 풀 : ${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:${BRANCH}"
             docker pull $IMAGE
             
-            echo "Starting new containers with docker-compose..."
-            docker-compose up -d --build
-                        
+            echo "Stopping running containers..."
+            IMAGE="$IMAGE" docker compose up -d --build            
+                                    
             # <none> 태그로 남은 이미지 정리
             echo "불필요한 dangling(<none>) 이미지 정리..."
             docker image prune -af
