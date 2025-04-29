@@ -12,7 +12,7 @@ jobs:
 
     # deploy job에 전달할 출력값
     outputs:
-      image-tag: ${{ steps.meta.outputs['image-tag'] }}
+      image-tag: ${{ steps.meta.outputs.image_tag }}
 
     steps:
       # 1. 소스 체크아웃
@@ -78,7 +78,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs['image-tag'] }}
+          tags: ${{ steps.meta.outputs.image_tag }}
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/stroysoksok-back:cache
           cache-to: type=inline
 
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 이미지 테그 디버깅
-        run: echo "IMAGE TAG = '${{ needs.build.outputs['image-tag'] }}'"
+        run: echo "IMAGE TAG = '${{ needs.build.outputs.image_tag }}'"
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -107,7 +107,7 @@ jobs:
           script: |
             set -e
             cd ~/backend
-            IMAGE="${{ needs.build.outputs['image-tag'] }}"
+            IMAGE="${{ needs.build.outputs.image_tag }}"
             
             echo "Pull new image $IMAGE"
             docker pull "$IMAGE"
