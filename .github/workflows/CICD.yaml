@@ -10,10 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # deploy job에 전달할 출력값
-    outputs:
-      image-tag: ${{ steps.meta.outputs.image_tag }}
-
     steps:
       # 1. 소스 체크아웃
       - name: Checkout
@@ -49,12 +45,6 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build -x test -Dspring.profiles.active=prod
 
-      - name: Set image tag
-        id: meta
-        run: |
-          TAG="${{ secrets.DOCKERHUB_USERNAME }}/stroysoksok-back:${{ github.sha }}"
-          echo "image_tag=$TAG" >> "$GITHUB_OUTPUT"
-
       - name: Docker 빌드환경 설정
         uses: docker/setup-buildx-action@v3
 
@@ -78,8 +68,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.image_tag }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/stroysoksok-back:cache
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:${{ github.ref_name }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:cache
           cache-to: type=inline
 
   # ---------- ② Deploy ----------
@@ -87,9 +77,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: 이미지 테그 디버깅
-        run: echo "IMAGE TAG = '${{ needs.build.outputs.image_tag }}'"
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -97,6 +84,8 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts        
+
+
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -107,13 +96,17 @@ jobs:
           script: |
             set -e
             cd ~/backend
-            IMAGE="${{ needs.build.outputs.image_tag }}"
+            BRANCH=${{ github.ref_name }}            
+            IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:${BRANCH}
             
-            echo "Pull new image $IMAGE"
-            docker pull "$IMAGE"
+            echo "도커 이미지 풀 : ${{ secrets.DOCKERHUB_USERNAME }}/storysoksok-back:${BRANCH}"
+            docker pull $IMAGE
             
             echo "Recreate container"
             IMAGE="$IMAGE" docker compose up -d --remove-orphans
-  
-            echo "Prune old images"
-            docker image prune -f
+            
+            # <none> 태그로 남은 이미지 정리
+            echo "불필요한 dangling(<none>) 이미지 정리..."
+            docker image prune -af
+            
+            echo "배포가 성공적으로 완료되었습니다."
