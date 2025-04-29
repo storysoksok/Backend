@@ -93,13 +93,12 @@ jobs:
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts        
 
       - name: Upload compose & env
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: |
-            docker-compose.yml
+          source: docker-compose.yml
           target: ~/backend/
 
       - name: Deploy via SSH
