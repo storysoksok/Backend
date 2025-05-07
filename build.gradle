@@ -68,6 +68,9 @@ dependencies {
 
     // DataFaker
     implementation 'net.datafaker:datafaker:2.4.2'
+
+    // GPT
+    implementation "com.openai:openai-java:1.6.0"
 }
 
 tasks.named('test') {
