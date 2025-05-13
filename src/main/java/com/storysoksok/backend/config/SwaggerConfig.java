@@ -49,7 +49,7 @@ public class SwaggerConfig {
                                         .url("http://localhost:8080")
                                         .description("로컬 서버"),
                                 new io.swagger.v3.oas.models.servers.Server()
-                                        .url("http://13.209.45.179:8080")
+                                        .url("https://story-sok-sok.kro.kr")
                                         .description("배포 서버")
                         )
                         // TODO aws 인스턴스 서버 주소 추가
