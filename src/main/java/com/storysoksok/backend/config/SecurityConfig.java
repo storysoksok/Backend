@@ -39,8 +39,8 @@ public class SecurityConfig {
      */
     private static final String[] ALLOWED_ORIGINS = {
 
-            // TODO : 프론트 배포 경로 추가, 서버 배포 주소(도메인) 추가
-
+            // TODO : 프론트 배포 경로 추가
+            "https://story-sok-sok.kro.kr/",
             // Local
             "http://localhost:8080", // 로컬 API 서버
             "http://localhost:3000" // 로컬 웹 서버
