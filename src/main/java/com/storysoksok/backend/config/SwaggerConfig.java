@@ -23,7 +23,7 @@ import java.util.List;
         ),
         servers = {
                 @Server(url = "http://localhost:8080", description = "로컬 서버"),
-                @Server(url = "http://13.209.45.179:8080", description = "배포 서버")
+                @Server(url = "https://story-sok-sok.kro.kr", description = "배포 서버")
         }
 )
 @Configuration
