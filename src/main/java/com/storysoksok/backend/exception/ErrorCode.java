@@ -44,6 +44,14 @@ public enum ErrorCode {
     INVALID_MEMBER_TYPE(HttpStatus.BAD_REQUEST, "잘못된 회원 자격입니다"),
 
     INVALID_MEMBER_ROLE_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 회원 권한 요청입니다."),
+
+
+    // FAIRY_TALE
+    INTERNAL_IMAGE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "이미지를 불러오는 도중 알수없는 문제가 발생했습니다."),
+
+
+    // S3
+    S3_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR ,"이미지 업로드중 에러가 발생했습니다.")
     ;
 
     private final HttpStatus status;
