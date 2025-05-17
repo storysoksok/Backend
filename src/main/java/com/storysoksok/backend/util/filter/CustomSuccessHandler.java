@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -24,7 +25,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, Object> redisTemplate;
-
+    @Value("${spring.security.app.redirect-uri.dev}")
+    private String devRedirectUri;
     private static final String REFRESH_PREFIX = "RT:";
 
     @Override
@@ -68,7 +70,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         try {
             log.debug("로그인 성공, 메인페이지로 리다이렉트 됩니다");
             if (!response.isCommitted()) {
-                response.sendRedirect(redirectUri);
+                response.sendRedirect(devRedirectUri);
             }
         } catch (IOException e) {
             log.error("로그인 성공 후 리다이렉트 과정에서 문제가 발생했습니다. {}", e.getMessage());
