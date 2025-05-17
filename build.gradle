@@ -71,6 +71,9 @@ dependencies {
 
     // GPT
     implementation "com.openai:openai-java:1.6.0"
+
+    // S3
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 }
 
 tasks.named('test') {
