@@ -6,6 +6,7 @@ import com.storysoksok.backend.domain.constants.FairyTaleSubject;
 import com.storysoksok.backend.domain.postgre.member.Member;
 import com.storysoksok.backend.domain.redis.FirstFairyTale;
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
+import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
 import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
 import com.storysoksok.backend.exception.CustomException;
 import com.storysoksok.backend.exception.ErrorCode;
@@ -15,12 +16,10 @@ import com.storysoksok.backend.util.prompt.Prompt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -31,16 +30,17 @@ public class FairyTaleService {
     private final RedisFairyTaleRepository redisFairyTaleRepository;
     private final Prompt prompt;
     private final GptService gptService;
+    private final static Integer FIRST_PAGE_NUM = 1;
 
     /**
      * 원하는 동화 중반까지 생성
      * 1. 작성된 프롬프트에 동화책 생성 요청
      * 2. 중반부 동화 내용 RedisHash에 임시 저장
-     * 3. 동화내용을 프롬프팅해서 이미지 생성 (이미지 정확도를 올리기 위해서 페이지의 내용당 1번씩 요청. 총 4번 요청)
+     * 3. 동화내용을 프롬프팅해서 이미지 생성 (첫페이지 이미지만 생성)
      * 4. 이미지 RedisHash에 임시 저장 (List)
      * 5. response로 클라이언트에게 전송
      */
-    public Object firstFairyTale(FairyTaleCreateRequest request, Member member) {
+    public FirstFairyTaleResponse firstFairyTale(FairyTaleCreateRequest request, Member member) {
         Map<String, String> map = new HashMap<>();
 
         /**
@@ -78,7 +78,9 @@ public class FairyTaleService {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         });
 
-        List<String> pages = Pattern.compile("(?m)^\\d\\s")  // 1... 2... 3...
+        log.debug("중반까지의 전체 이야기 : {}", firstStory);
+
+        List<String> pageStoryList = Pattern.compile("(?m)^\\d\\s")  // 1... 2... 3...
                 .splitAsStream(firstStory)
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.toList());    // [p1, p2, p3, p4]
@@ -86,32 +88,75 @@ public class FairyTaleService {
         List<String> imageList = new ArrayList<>();
 
         /* 동화 중반부 까지 기준 이미지 생성 시도 */
-        for (int i = 1; i < pages.size() + 1; i++) {
-            String pageStory = pages.get(i - 1);
-            log.debug("페이지 번호 : {}", i);
-            log.debug("이야기 : {}", pageStory);
+        String pageStory = pageStoryList.get(0);
+        log.debug("이야기 : {}", pageStory);
 
-            String imgPrompt = this.prompt.firstFairyTaleImageFormat(pageStory, i);
 
-            String imageUrl = gptService.generatePicture(imgPrompt);
-            imageList.add(imageUrl);
-        }
+        String imgPrompt = this.prompt.FairyTaleImageFormat(pageStory, 1);
+
+        String imageUrl = gptService.generatePicture(imgPrompt);
+        imageList.add(imageUrl);
 
         log.debug("이미지 데이터 : {}", imageList);
 
-        redisFairyTaleRepository.save(FirstFairyTale.builder()
+        FirstFairyTale firstFairyTale = redisFairyTaleRepository.save(FirstFairyTale.builder()
                 .fairyTaleSubject(map.get("FairyTaleSubject"))
                 .fairyTaleLocation(map.get("FairyTaleLocation"))
                 .fairyTaleCharacter(map.get("FairyTaleCharacter"))
                 .imgList(imageList)
-                .firstContent(firstStory)
+                .pageStory(pageStoryList)
                 .build());
 
         return FirstFairyTaleResponse.builder()
                 .memberId(member.getMemberId())
-                .imageUrl(imageList)
+                .imageUrl(imageUrl)
+                .pageNumber(FIRST_PAGE_NUM)
                 .memberName(member.getName())
-                .firstContent(firstStory)
+                .midPartFairyTaleId(firstFairyTale.getId())
+                .midPartFairyTaleStory(pageStoryList)
+                .build();
+    }
+
+    /**
+     * 페이지별 이미지를 생성하는 로직
+     */
+    @Transactional
+    public FairyTaleImageResponse createFairyTaleImage(Member member, UUID fairyTaleId, Integer pageNum) {
+
+        // 동화책 조회(RedisHash)
+        FirstFairyTale firstFairyTale = redisFairyTaleRepository.findById(fairyTaleId).orElseThrow(
+                () -> {
+                    throw new CustomException(ErrorCode.NOT_FOUND_FAIRY_TALE);
+                }
+        );
+
+        // 중반부까지 내용 추출
+        List<String> midPageStory = firstFairyTale.getPageStory();
+
+        // 현재 페이지 전까지 내용 추출
+        List<String> pageStory = new ArrayList<>();
+
+        for (int i = 0; i < pageNum - 1; i++) {
+            pageStory.add(midPageStory.get(i));
+            log.debug("이전 페이지 번호: {}", i + 1);
+        }
+
+        String presentPageStory = midPageStory.get(pageNum - 1);
+
+        log.debug("현재 삽화를 만드려고 하는 페이지 이야기 : {}", presentPageStory);
+        String prompt = this.prompt.FairyTaleImageFormat(pageStory, pageNum, presentPageStory);
+
+        String url = gptService.generatePicture(prompt);
+
+        firstFairyTale.addImage(url);
+        log.debug("디버깅용 이미지 리스트 출력 : {}", firstFairyTale.getImgList());
+
+        return FairyTaleImageResponse.builder()
+                .midPartFairyTaleId(firstFairyTale.getId())
+                .imageUrl(url)
+                .memberName(member.getName())
+                .memberId(member.getMemberId())
+                .pageNum(pageNum)
                 .build();
     }
 }

@@ -3,16 +3,17 @@ package com.storysoksok.backend.controller.fairytale;
 import com.storysoksok.backend.controller.fairytale.docs.FairyTaleControllerDocs;
 import com.storysoksok.backend.domain.postgre.member.Member;
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
+import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
+import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
 import com.storysoksok.backend.dto.oauth.request.CustomOAuth2User;
 import com.storysoksok.backend.service.fairytale.FairyTaleService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,9 +27,19 @@ public class FairyTaleController implements FairyTaleControllerDocs {
 
     @Override
     @PostMapping("/fairy-tale/first")
-    public ResponseEntity<Object> firstFairyTale(@AuthenticationPrincipal CustomOAuth2User customOAuth2User,
+    public ResponseEntity<FirstFairyTaleResponse> firstFairyTale(@AuthenticationPrincipal CustomOAuth2User customOAuth2User,
                                                                  @RequestBody FairyTaleCreateRequest request) {
         Member member = customOAuth2User.getMember();
         return ResponseEntity.ok(firstFairyTale.firstFairyTale(request,member));
+    }
+
+    @Override
+    @PostMapping("/fairy-tale/{fairy-tale}/{page-num}")
+    public ResponseEntity<FairyTaleImageResponse> createFairyTaleImage(@AuthenticationPrincipal CustomOAuth2User customOAuth2User,
+                                                                       @PathVariable(value = "fairy-tale") UUID fairyTaleId,
+                                                                       @PathVariable(value = "page-num") Integer pageNum) {
+
+        Member member = customOAuth2User.getMember();
+        return ResponseEntity.ok(firstFairyTale.createFairyTaleImage(member, fairyTaleId, pageNum));
     }
 }
