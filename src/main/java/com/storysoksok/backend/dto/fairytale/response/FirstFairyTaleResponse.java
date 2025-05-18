@@ -11,14 +11,18 @@ import java.util.UUID;
 @NoArgsConstructor
 public class FirstFairyTaleResponse {
     private UUID memberId;
+    private UUID midPartFairyTaleId;
     private String memberName;
-    private String firstContent;
-    private List<String> imageUrl;
+    private Integer pageNumber;
+    private List<String> midPartFairyTaleStory;
+    private String imageUrl;
     @Builder
-    public FirstFairyTaleResponse(UUID memberId, String memberName, String firstContent, List<String> imageUrl) {
+    public FirstFairyTaleResponse(UUID memberId, UUID midPartFairyTaleId, String memberName, Integer pageNumber, List<String> midPartFairyTaleStory, String imageUrl) {
         this.memberId = memberId;
+        this.midPartFairyTaleId = midPartFairyTaleId;
         this.memberName = memberName;
-        this.firstContent = firstContent;
+        this.pageNumber = pageNumber;
+        this.midPartFairyTaleStory = midPartFairyTaleStory;
         this.imageUrl = imageUrl;
     }
 }

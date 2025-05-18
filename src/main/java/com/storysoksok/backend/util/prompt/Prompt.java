@@ -3,6 +3,7 @@ package com.storysoksok.backend.util.prompt;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
@@ -36,7 +37,7 @@ public class Prompt {
             4 …
                        
             """;
-    private static final String FIRST_FAIRY_TALE_IMAGE_PROMPT = """
+    private static final String FAIRY_TALE_IMAGE_PROMPT = """
             너는 자폐아를 위해 동화책에 들어갈 이미지를 제작해주는 사람이야. 이제 너에게 동화책에 들어갈 삽화를 만들기 위헤서 동화책의 내용을 제시해줄거야.
             해당 정보를 보고 동화책의 삽화를 제작하는데 규칙이 존재해.
             1. 자폐아를 위한 동화이니 되도록 귀여운 삽화를 만들어.
@@ -44,6 +45,7 @@ public class Prompt {
             2.1 삽화 제작시 너에게 주는 동화책의 페이지당 줄거리가 있을거야 페이지 줄거리의 내용을 보고 삽화를 만들어
             2.4 만약 이야기상 인물이 두명 이상이라면 여러명 등장해도 괜찮아.
             3. 이전 페이지의 이미지와 동일한 외형과 색감을 유지해
+            3.1 이전 동화 내용의 스토리를 참고해서 이미지를 완성해.
             4. 부정(하면 안되는거): 왜곡 얼굴, 추가 팔다리, 콜라주, 텍스트 금지
             """;
 
@@ -65,13 +67,28 @@ public class Prompt {
         return sb.toString();
     }
 
-    public String firstFairyTaleImageFormat(String pageStory, Integer pageNum) {
+    public String FairyTaleImageFormat(String pageStory, Integer pageNum) {
 
         StringBuilder sb = new StringBuilder();
-        sb.append(FIRST_FAIRY_TALE_IMAGE_PROMPT).append("\n\n")
-                .append("아래는 동화책 삽화 제작에 필요한 동화체 페이지당 내용이야.\n")
+        sb.append(FAIRY_TALE_IMAGE_PROMPT).append("\n\n")
+                .append("아래는 동화책 삽화 제작에 필요한 동화체 페이지 내용이야.\n")
                 .append("현재 페이지 번호 :").append(pageNum).append('\n')
                 .append("페이지 줄거리: ").append(pageStory).append('\n')
+                .append("\n")
+                .append("이 정보를 참고해서 반드시 위 규칙을 따른 이미지를 만들어줘.");
+
+        return sb.toString();
+    }
+
+    public String FairyTaleImageFormat(List<String> pageStory, Integer pageNum, String presentPageStory) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(FAIRY_TALE_IMAGE_PROMPT).append("\n\n")
+                .append("아래는 이전 동화책 내용의 스토리야.\n")
+                .append("이전 페이지들 이야기 :").append(pageStory)
+                .append("아래는 동화책 삽화 제작에 필요한 동화첵 페이지 내용이야.\n")
+                .append("현재 페이지 번호 :").append(pageNum).append('\n')
+                .append("현재 페이지 줄거리: ").append(presentPageStory).append('\n')
                 .append("\n")
                 .append("이 정보를 참고해서 반드시 위 규칙을 따른 이미지를 만들어줘.");
 

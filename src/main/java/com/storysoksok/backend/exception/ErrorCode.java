@@ -49,6 +49,7 @@ public enum ErrorCode {
     // FAIRY_TALE
     INTERNAL_IMAGE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "이미지를 불러오는 도중 알수없는 문제가 발생했습니다."),
 
+    NOT_FOUND_FAIRY_TALE(HttpStatus.BAD_REQUEST, "동화책을 찾을 수 없습니다."),
 
     // S3
     S3_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR ,"이미지 업로드중 에러가 발생했습니다.")

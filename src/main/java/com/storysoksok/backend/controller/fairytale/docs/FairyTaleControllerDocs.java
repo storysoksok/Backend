@@ -1,9 +1,13 @@
 package com.storysoksok.backend.controller.fairytale.docs;
 
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
+import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
+import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
 import com.storysoksok.backend.dto.oauth.request.CustomOAuth2User;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
+
+import java.util.UUID;
 
 public interface FairyTaleControllerDocs {
 
@@ -104,11 +108,29 @@ public interface FairyTaleControllerDocs {
                     
                     ### 유의사항
                     - 생성하기 원하는 동화 내용을 받아와 동화를 중반부까지 만들어줍니다.
-                    - 사진은 4장 만들어집니다.
+                    - 사진은 1장 만들어집니다. (첫페이지 삽화)
                     - 중반부까지 RDB가 아닌 RedisHash에 저장됩니다.
-                    - ‼️해당 API는 한번 호출할때마다 챗봇1회, 이미지생성4회의 총 5번의 외부 API를 호출합니다. 비용이 많이 나가니 최소한으로 테스트해주세요.
                     """
     )
-    ResponseEntity<Object> firstFairyTale(CustomOAuth2User customOAuth2User, FairyTaleCreateRequest request);
+    ResponseEntity<FirstFairyTaleResponse> firstFairyTale(CustomOAuth2User customOAuth2User, FairyTaleCreateRequest request);
+
+    @Operation(
+            summary = "페이지별 이미지 생성",
+            description = """
+                    
+                    이 API는 인증이 필요합니다.
+
+                    ### 요청 파라미터
+                    - **fairyTaleId** (String): 동화 ID [필수]
+                    - **pageNum** (Integer): 요청 페이지 번호 [필수]
+
+                    ### 유의사항
+                    - 여기서의 fairyTaleId 파라미터는 서버에서 임시로 저장해두고 있는 데이터입니다(RDB가 아닌 RedisHash) 추후 모든 동화책 제작이 끝날 시 RDB의 PK(ID)값을 넘겨줄 예정입니다.
+                    - 첫 동화 생성시 반환되는 동화ID 및 이미지를 만들어주고 싶은 페이지 번호를 받아 해당 페이지의 이미지를 만들어줍니다.
+                    - 요청된 페이지 기준으로 이전 페이지까지의 줄거리를 가져와 프롬프트에 추가하고 요청된 페이지의 줄거리에 대한 이미지를 생성해줍니다.
+                    - 이미지 제작까지 평균 30~45초 정도 소요됩니다.
+                    """
+    )
+    ResponseEntity<FairyTaleImageResponse> createFairyTaleImage(CustomOAuth2User customOAuth2User, UUID fairyTaleId, Integer pageNum);
 }
 
