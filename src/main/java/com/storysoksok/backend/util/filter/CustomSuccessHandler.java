@@ -14,8 +14,12 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -57,6 +61,16 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         }
         response.addHeader("Authorization", "Bearer " + accessToken);
 
+        /* ---------- redirect URI 구성 ---------- */
+        String baseUri = Optional.ofNullable(request.getParameter("redirectUri"))
+                .filter(u -> !u.isBlank())
+                .orElse(devRedirectUri);
+
+        String tokenRedirectUri = UriComponentsBuilder.fromUriString(baseUri)
+                .queryParam("accessToken", URLEncoder.encode(accessToken, StandardCharsets.UTF_8))
+                .build()
+                .toUriString();
+
         // 쿠키에 refreshToken 추가
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true); // HttpOnly 설정
@@ -70,7 +84,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         try {
             log.debug("로그인 성공, 메인페이지로 리다이렉트 됩니다");
             if (!response.isCommitted()) {
-                response.sendRedirect(devRedirectUri);
+                response.sendRedirect(tokenRedirectUri);
             }
         } catch (IOException e) {
             log.error("로그인 성공 후 리다이렉트 과정에서 문제가 발생했습니다. {}", e.getMessage());
