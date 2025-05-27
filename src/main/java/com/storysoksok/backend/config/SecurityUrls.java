@@ -17,6 +17,7 @@ public class SecurityUrls {
             "/api/auth/reissue", // accessToken 재발급
             "/api/oauth2/**", // 소셜 로그인
             "/login/**", // 기본 Spring Security OAuth2 로그인경로
+            "/api/fairy-tale/test/**",
 
             // TEST
             "/test/**", // 개발자용 테스트 api
