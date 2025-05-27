@@ -179,18 +179,17 @@ public interface FairyTaleControllerDocs {
     ResponseEntity<SecondHalfFairyTaleResponse> secondHalfRecommendStory(CustomOAuth2User customOAuth2User, SecondHalfFairyTaleRequest request);
 
     @Operation(
-            summary = "테스트용 동화 상세 조회",
+            summary = "테스트용 동화 제작",
             description = """
                     
                     이 API는 인증이 필요 없습니다.
 
                     ### 요청 파라미터
+                    - **page-num** (int): 페이지번호 [필수]
 
                     ### 유의사항
-                    - 여기서의 fairyTaleId 파라미터는 서버에서 임시로 저장해두고 있는 데이터입니다(RDB가 아닌 RedisHash) 추후 모든 동화책 제작이 끝날 시 RDB의 PK(ID)값을 넘겨줄 예정입니다.
-                    - 첫 동화 생성시 반환되는 동화ID 및 이미지를 만들어주고 싶은 페이지 번호를 받아 해당 페이지의 이미지를 만들어줍니다.
-                    - 요청된 페이지 기준으로 이전 페이지까지의 줄거리를 가져와 프롬프트에 추가하고 요청된 페이지의 줄거리에 대한 이미지를 생성해줍니다.
-                    - 이미지 제작까지 평균 30~45초 정도 소요됩니다.
+                    - 미리 만들어둔 동화책을 1~8페이지까지 반환합니다.
+                    - 서버측에서 4초 대기 후 반환하도록 설계하였습니다.
                     """
     )
     ResponseEntity<FairyTaleResponse> getFairyTaleTest(Integer pageNum);
