@@ -3,11 +3,14 @@ package com.storysoksok.backend.controller.fairytale;
 import com.storysoksok.backend.controller.fairytale.docs.FairyTaleControllerDocs;
 import com.storysoksok.backend.domain.postgre.member.Member;
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
+import com.storysoksok.backend.dto.fairytale.request.SecondHalfFairyTaleRequest;
 import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
 import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
+import com.storysoksok.backend.dto.fairytale.response.SecondHalfFairyTaleResponse;
 import com.storysoksok.backend.dto.oauth.request.CustomOAuth2User;
 import com.storysoksok.backend.service.fairytale.FairyTaleService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,7 +31,7 @@ public class FairyTaleController implements FairyTaleControllerDocs {
     @Override
     @PostMapping("/fairy-tale/first")
     public ResponseEntity<FirstFairyTaleResponse> firstFairyTale(@AuthenticationPrincipal CustomOAuth2User customOAuth2User,
-                                                                 @RequestBody FairyTaleCreateRequest request) {
+                                                                 @RequestBody @Valid FairyTaleCreateRequest request) {
         Member member = customOAuth2User.getMember();
         return ResponseEntity.ok(firstFairyTale.firstFairyTale(request,member));
     }
@@ -41,5 +44,13 @@ public class FairyTaleController implements FairyTaleControllerDocs {
 
         Member member = customOAuth2User.getMember();
         return ResponseEntity.ok(firstFairyTale.createFairyTaleImage(member, fairyTaleId, pageNum));
+    }
+
+    @Override
+    @PostMapping("/fairy-tale/second-half")
+    public ResponseEntity<SecondHalfFairyTaleResponse> secondHalfRecommendStory(@AuthenticationPrincipal CustomOAuth2User customOAuth2User,
+                                                                                @RequestBody @Valid SecondHalfFairyTaleRequest request) {
+        Member member = customOAuth2User.getMember();
+        return ResponseEntity.ok(firstFairyTale.secondHalfFairyTale(request,member));
     }
 }

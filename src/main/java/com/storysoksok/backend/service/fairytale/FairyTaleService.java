@@ -3,13 +3,22 @@ package com.storysoksok.backend.service.fairytale;
 import com.storysoksok.backend.domain.constants.FairyTaleCharacter;
 import com.storysoksok.backend.domain.constants.FairyTaleLocation;
 import com.storysoksok.backend.domain.constants.FairyTaleSubject;
+import com.storysoksok.backend.domain.constants.SecondHalfRecommendStory;
+import com.storysoksok.backend.domain.postgre.fairytale.FairyTale;
+import com.storysoksok.backend.domain.postgre.fairytale.FairyTaleImage;
+import com.storysoksok.backend.domain.postgre.fairytale.FairyTaleStory;
 import com.storysoksok.backend.domain.postgre.member.Member;
-import com.storysoksok.backend.domain.redis.FirstFairyTale;
+import com.storysoksok.backend.domain.redis.MidPartFairyTale;
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
+import com.storysoksok.backend.dto.fairytale.request.SecondHalfFairyTaleRequest;
 import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
 import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
+import com.storysoksok.backend.dto.fairytale.response.SecondHalfFairyTaleResponse;
 import com.storysoksok.backend.exception.CustomException;
 import com.storysoksok.backend.exception.ErrorCode;
+import com.storysoksok.backend.repository.fairytale.FairyTaleImageRepository;
+import com.storysoksok.backend.repository.fairytale.FairyTaleRepository;
+import com.storysoksok.backend.repository.fairytale.FairyTaleStoryRepository;
 import com.storysoksok.backend.repository.redis.RedisFairyTaleRepository;
 import com.storysoksok.backend.service.gpt.GptService;
 import com.storysoksok.backend.util.prompt.Prompt;
@@ -22,15 +31,21 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class FairyTaleService {
     private final RedisFairyTaleRepository redisFairyTaleRepository;
+    private final FairyTaleRepository fairyTaleRepository;
+    private final FairyTaleStoryRepository fairyTaleStoryRepository;
+    private final FairyTaleImageRepository fairyTaleImageRepository;
     private final Prompt prompt;
     private final GptService gptService;
     private final static Integer FIRST_PAGE_NUM = 1;
+    private final static Integer SECOND_HALF_PAGE_NUM = 5;
 
     /**
      * 원하는 동화 중반까지 생성
@@ -73,17 +88,31 @@ public class FairyTaleService {
         /* 프롬프팅 시작 및 동화 내용 반환 */
         String prompt = this.prompt.firstFairyTaleFormat(map);
 
-        String firstStory = gptService.generateFirstFairyTale(prompt).orElseThrow(()
+        String firstStory = gptService.generateFairyTale(prompt).orElseThrow(()
                 -> {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         });
 
+        /**
+         * 중반부까지 이야기, 후반 추천부 나누기
+         */
+        String[] parts = firstStory.split("(?m)^### RECOMMEND ###$");
+        String midPart  = parts[0].trim();        // 중반부
+        String recPart  = parts.length > 1 ? parts[1].trim() : "";
+
+
         log.debug("중반까지의 전체 이야기 : {}", firstStory);
 
-        List<String> pageStoryList = Pattern.compile("(?m)^\\d\\s")  // 1... 2... 3...
-                .splitAsStream(firstStory)
+
+        Pattern lineSplitter = Pattern.compile("(?m)^\\d+\\s+");
+
+        List<String> pageStoryList = lineSplitter.splitAsStream(midPart)
                 .filter(s -> !s.isBlank())
-                .collect(Collectors.toList());    // [p1, p2, p3, p4]
+                .collect(Collectors.toList());
+
+        List<String> recommendList = lineSplitter.splitAsStream(recPart)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toList());
 
         List<String> imageList = new ArrayList<>();
 
@@ -91,18 +120,20 @@ public class FairyTaleService {
         String pageStory = pageStoryList.get(0);
         log.debug("이야기 : {}", pageStory);
 
+        log.debug("후반부 이야기 추천: {}", recommendList);
 
-        String imgPrompt = this.prompt.FairyTaleImageFormat(pageStory, 1);
+        String imgPrompt = this.prompt.fairyTaleImageFormat(pageStory, 1);
 
         String imageUrl = gptService.generatePicture(imgPrompt);
         imageList.add(imageUrl);
 
         log.debug("이미지 데이터 : {}", imageList);
 
-        FirstFairyTale firstFairyTale = redisFairyTaleRepository.save(FirstFairyTale.builder()
+        MidPartFairyTale midPartFairyTale = redisFairyTaleRepository.save(MidPartFairyTale.builder()
                 .fairyTaleSubject(map.get("FairyTaleSubject"))
                 .fairyTaleLocation(map.get("FairyTaleLocation"))
                 .fairyTaleCharacter(map.get("FairyTaleCharacter"))
+                .secondHalfRecommendStory(recommendList)
                 .imgList(imageList)
                 .pageStory(pageStoryList)
                 .build());
@@ -110,9 +141,10 @@ public class FairyTaleService {
         return FirstFairyTaleResponse.builder()
                 .memberId(member.getMemberId())
                 .imageUrl(imageUrl)
+                .secondHalfRecommendStory(recommendList)
                 .pageNumber(FIRST_PAGE_NUM)
                 .memberName(member.getName())
-                .midPartFairyTaleId(firstFairyTale.getId())
+                .midPartFairyTaleId(midPartFairyTale.getId())
                 .midPartFairyTaleStory(pageStoryList)
                 .build();
     }
@@ -123,39 +155,217 @@ public class FairyTaleService {
     @Transactional
     public FairyTaleImageResponse createFairyTaleImage(Member member, UUID fairyTaleId, Integer pageNum) {
 
-        // 동화책 조회(RedisHash)
-        FirstFairyTale firstFairyTale = redisFairyTaleRepository.findById(fairyTaleId).orElseThrow(
+        if (pageNum > 8) {
+            throw new CustomException(ErrorCode.PAGE_OUT_OF_RANGE);
+        }
+        /* 1) 중반부(REDIS)에 있는지 먼저 확인 */
+        Optional<MidPartFairyTale> midOpt = redisFairyTaleRepository.findById(fairyTaleId);
+        if (midOpt.isPresent()) {
+            log.debug("중반부 동화책 감지");
+            return createImageForMidPart(member, midOpt.get(), pageNum);
+        }
+
+        log.debug("후반부 동화책 감지");
+        /* 2) 없으면 후반부(RDB) 조회 */
+        FairyTale fairyTale = fairyTaleRepository.findById(fairyTaleId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_FAIRY_TALE));
+
+        return createImageForFinalPart(member, fairyTale, pageNum);
+    }
+
+    /**
+     * 동화책 후반부에 대한 이미지를 담당하는 로직
+     */
+    private FairyTaleImageResponse createImageForFinalPart(Member member, FairyTale fairyTale, Integer pageNum) {
+        List<FairyTaleStory> storyList = fairyTaleStoryRepository.findAllByFairyTaleOrderByPageNumAsc(fairyTale);
+
+        List<String> storySoFar = storyList.stream()
+                .limit(pageNum - 1)
+                .map(FairyTaleStory::getContent)
+                .toList();
+
+        if (pageNum < 1 || pageNum > 8) {
+            throw new CustomException(ErrorCode.PAGE_OUT_OF_RANGE);
+        }
+
+        String presentContent = storyList.get(pageNum - 1).getContent();
+
+        log.debug("현재 생성할 페이지 이야기 : {}", presentContent);
+
+        String prompt = this.prompt.fairyTaleImageFormat(storySoFar, pageNum, presentContent);
+
+        String imageUrl = gptService.generatePicture(prompt);
+
+        fairyTaleImageRepository.save(FairyTaleImage.builder()
+                .pageNum(pageNum)
+                .fairyTale(fairyTale)
+                .imageUrl(imageUrl)
+                .build());
+
+        return buildResponse(member, fairyTale.getFairyTaleId(), imageUrl, pageNum);
+    }
+
+    /**
+     * 동화책 중반부까지의 이미지 생성을 담당하는 로직
+     */
+    @Transactional
+    public FairyTaleImageResponse createImageForMidPart(Member member, MidPartFairyTale midPartFairyTale, Integer pageNum) {
+        List<String> fullStory = midPartFairyTale.getPageStory();
+
+        List<String> storySoFar = fullStory.subList(0, pageNum - 1);
+        log.debug("이전 페이지 내용들 : {}", storySoFar);
+
+
+        String presentContent = fullStory.get(pageNum - 1);
+        log.debug("현재 생성할 페이지 이야기 : {}", presentContent);
+
+        String prompt = this.prompt.fairyTaleImageFormat(storySoFar, pageNum, presentContent);
+
+        String url = gptService.generatePicture(prompt);
+        midPartFairyTale.addImage(url);
+
+        redisFairyTaleRepository.save(midPartFairyTale);
+
+        return buildResponse(member, midPartFairyTale.getId(), url, pageNum);
+    }
+
+    /**
+     * 동화책 후반부 이야기 생성
+     */
+    @Transactional
+    public SecondHalfFairyTaleResponse secondHalfFairyTale(SecondHalfFairyTaleRequest request, Member member) {
+        UUID midPartFairyTaleId = request.getMidPartFairyTaleId();
+        MidPartFairyTale midPartFairyTale = redisFairyTaleRepository.findById(midPartFairyTaleId).orElseThrow(
                 () -> {
                     throw new CustomException(ErrorCode.NOT_FOUND_FAIRY_TALE);
                 }
         );
+        // 전체 추천 선택지 추출
+        List<String> recommendStory = midPartFairyTale.getSecondHalfRecommendStory();
 
-        // 중반부까지 내용 추출
-        List<String> midPageStory = firstFairyTale.getPageStory();
+        String secondHalfRecommendStory = "";
 
-        // 현재 페이지 전까지 내용 추출
-        List<String> pageStory = new ArrayList<>();
-
-        for (int i = 0; i < pageNum - 1; i++) {
-            pageStory.add(midPageStory.get(i));
-            log.debug("이전 페이지 번호: {}", i + 1);
+        // 선택지별 후반부 동화내용 세팅
+        if (request.getSecondHalfRecommendStory().equals(SecondHalfRecommendStory.FIRST_HALF_RECOMMEND_STORY)) {
+            secondHalfRecommendStory = recommendStory.get(0);
+        } else if (request.getSecondHalfRecommendStory().equals(SecondHalfRecommendStory.SECOND_HALF_RECOMMEND_STORY)) {
+            secondHalfRecommendStory = recommendStory.get(1);
+        } else if (request.getSecondHalfRecommendStory().equals(SecondHalfRecommendStory.ETC) &&
+                !request.getOtherRecommendStory().isBlank()) {
+            secondHalfRecommendStory = request.getOtherRecommendStory();
+        } else if (request.getSecondHalfRecommendStory().equals(SecondHalfRecommendStory.THIRD_HALF_RECOMMEND_STORY)) {
+            secondHalfRecommendStory = recommendStory.get(2);
+        } else {
+            throw new CustomException(ErrorCode.INVALID_RECOMMEND_TYPE);
         }
 
-        String presentPageStory = midPageStory.get(pageNum - 1);
+        // 중반부 이야기 추출
+        List<String> midStoryList = midPartFairyTale.getPageStory();
 
-        log.debug("현재 삽화를 만드려고 하는 페이지 이야기 : {}", presentPageStory);
-        String prompt = this.prompt.FairyTaleImageFormat(pageStory, pageNum, presentPageStory);
+        log.debug("후반부 이야기 : {}", secondHalfRecommendStory);
 
-        String url = gptService.generatePicture(prompt);
+        String prompt = this.prompt.secondHalfFairyTaleStory(midStoryList, secondHalfRecommendStory);
 
-        firstFairyTale.addImage(url);
-        log.debug("디버깅용 이미지 리스트 출력 : {}", firstFairyTale.getImgList());
+        String secondStory = gptService.generateFairyTale(prompt).orElseThrow(()
+                -> {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        });
 
-        return FairyTaleImageResponse.builder()
-                .midPartFairyTaleId(firstFairyTale.getId())
-                .imageUrl(url)
+        /**
+         * 중반부까지 이야기, 후반 추천부 나누기
+         */
+        String[] parts = secondStory.split("(?m)^### TITLE ###$");
+        String secStory  = parts[0].trim();        // 중반부
+        String title  = parts.length > 1 ? parts[1].trim() : "";
+
+
+        log.debug("후반 이야기(결말포함) :{}", secondStory);
+        Pattern lineSplitter = Pattern.compile("(?m)^\\d+\\s+");
+
+        List<String> secondStoryList = lineSplitter.splitAsStream(secStory)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toList());
+
+        log.debug("동화책 제목 : {}", title);
+
+        FairyTale fairyTale = FairyTale.builder()
+                .title(title)
+                .member(member)
+                .fairyTaleSubject(midPartFairyTale.getFairyTaleSubject())
+                .fairyTaleCharacter(midPartFairyTale.getFairyTaleCharacter())
+                .fairyTaleLocation(midPartFairyTale.getFairyTaleLocation())
+                .build();
+
+        fairyTaleRepository.save(fairyTale);
+
+        /**
+         * 동화 이야기 전체저장
+         */
+        List<String> allPages = Stream.concat(midStoryList.stream(), secondStoryList.stream())
+                .toList();
+
+        List<FairyTaleStory> stories =
+                IntStream.range(0, allPages.size())
+                        .mapToObj(i -> FairyTaleStory.builder()
+                                .fairyTale(fairyTale)
+                                .pageNum(i + 1)
+                                .content(allPages.get(i))
+                                .build())
+                        .collect(Collectors.toList());
+
+        fairyTaleStoryRepository.saveAll(stories);
+
+        // 해당 페이지 이미지 생성
+        String presentPageStory = secondStoryList.get(0);
+
+        log.debug("디버깅용 이미지 요청 스토리 : {}", presentPageStory);
+
+        String imagePrompt = this.prompt.fairyTaleImageFormat(midStoryList, SECOND_HALF_PAGE_NUM, presentPageStory);
+        String imageUrl = gptService.generatePicture(imagePrompt);
+
+        midPartFairyTale.addImage(imageUrl);
+        // 1) 이미지 리스트 꺼내오기
+        List<String> imgList = midPartFairyTale.getImgList();
+
+
+        /**
+         * 후반부 시작시 현재까지 이미지 RDB에 전체저장
+         */
+        midPartFairyTale.addImage(imageUrl);
+
+        // 3) 0부터 4까지 (총 5번) 반복하면서 DB 저장용 객체 생성
+        List<FairyTaleImage> fairyTaleImageList =
+                IntStream.range(0, 5)
+                        .mapToObj(i -> FairyTaleImage.builder()
+                                .imageUrl(imgList.get(i))
+                                .fairyTale(fairyTale)
+                                .pageNum(i + 1)
+                                .build())
+                        .collect(Collectors.toList());
+
+        fairyTaleImageRepository.saveAll(fairyTaleImageList);
+
+        return SecondHalfFairyTaleResponse.builder()
+                .secondHalfFairyTaleId(fairyTale.getFairyTaleId())
+                .secondHalfFairyTaleStory(secondStoryList)
+                .fairyTaleTitle(fairyTale.getTitle())
+                .pageNumber(SECOND_HALF_PAGE_NUM)
                 .memberName(member.getName())
                 .memberId(member.getMemberId())
+                .imageUrl(imageUrl)
+                .build();
+    }
+
+    /**
+     * 단순 매퍼 클래스
+     */
+    private FairyTaleImageResponse buildResponse(Member m, UUID id,
+                                                 String url, int pageNum) {
+        return FairyTaleImageResponse.builder()
+                .midPartFairyTaleId(id)
+                .imageUrl(url)
+                .memberName(m.getName())
+                .memberId(m.getMemberId())
                 .pageNum(pageNum)
                 .build();
     }

@@ -1,8 +1,10 @@
 package com.storysoksok.backend.controller.fairytale.docs;
 
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
+import com.storysoksok.backend.dto.fairytale.request.SecondHalfFairyTaleRequest;
 import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
 import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
+import com.storysoksok.backend.dto.fairytale.response.SecondHalfFairyTaleResponse;
 import com.storysoksok.backend.dto.oauth.request.CustomOAuth2User;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
@@ -132,5 +134,47 @@ public interface FairyTaleControllerDocs {
                     """
     )
     ResponseEntity<FairyTaleImageResponse> createFairyTaleImage(CustomOAuth2User customOAuth2User, UUID fairyTaleId, Integer pageNum);
+
+    @Operation(
+            summary = "후반부 동화 생성",
+            description = """
+                    
+                    이 API는 인증이 필요합니다.
+
+                    ### 요청 파라미터
+                    - **midPartFairyTale** (String): 중반부까지의 동화책 ID [필수]
+                    - **SecondHalfRecommendStory** (String): 동화 후반부 이야기 선택지 [필수]
+                    - **otherRecommendStory** (String): 기타 후반부 내용 [필수X]                    
+                    
+                    ### SecondHalfRecommendStory
+                        FIRST_HALF_RECOMMEND_STORY("첫 선택지 선택")
+                        SECOND_HALF_RECOMMEND_STORY("두번째 선택지 선택")
+                        THIRD_HALF_RECOMMEND_STORY("세번째 선택지 선택")
+                        ETC("직접 사용자가 입력한 내용")
+                        
+                    ### 반환값
+                    - **memberId** (String): 현재 로그인된 회원 PK값
+                    - **secondHalfFairyTaleId** (String): 완성된 동화책 ID ‼️중반부 동화책 Id와 별개의 데이터입니다.
+                    - **memberName** (String): 현재 로그인된 회원 이름
+                    - **pageNumber** (int): 현재 동화책의 페이지 [해당 API에서는 반드시 5페이지]
+                    - **secondHalfFairyTaleStory** (List<String>): 결말까지의 동화책 후반부 내용 
+                    - **imageUrl** (String): 현재 페이지 동화책 삽화
+ 
+                    
+                    ### 사용방법
+                    - SecondHalfRecommendStory에 첫번째, 두번째, 세번째 선택지 혹은 기타 선택지를 입력합니다.
+                    - 만약 다른 정보를 넣고 싶을 시 **ETC** 변수를 넣습니다.
+                    - 참고로 선택지 정보는 첫 동화 생성 API의 반환값에 List 형식으로 반환됩니다.
+                    - ❗만약 ETC 파라미터를 넣어줬을 시에는 기타 이야기를 입력할 변수(otherRecommendStory)파라미터에 반드시 기타 정보를 넣어줘야합니다.
+                    - 예시: 만약 SecondHalfRecommendStory에 에 ETC를 넣어줬을 시 otherRecommendStory 변수에 원하는 기타 내용을 넣어줘야 함.
+                    
+                    
+                    ### 유의사항
+                    - 생성하기 원하는 동화 내용을 받아와 동화를 결말까지 만들어줍니다.
+                    - 사진은 1장 만들어집니다. (후반부 페이지 시작부 삽화) [5페이지]
+                    - 해당 부분부터 RDB에 저장됩니다.
+                    """
+    )
+    ResponseEntity<SecondHalfFairyTaleResponse> secondHalfRecommendStory(CustomOAuth2User customOAuth2User, SecondHalfFairyTaleRequest request);
 }
 
