@@ -24,7 +24,6 @@ public class FairyTaleStory extends BasePostgresEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private FairyTale fairyTale;
     private int pageNum;
-    @Column(nullable = false, columnDefinition = "TEXT")
-    @Lob
+    @Column(nullable = false, columnDefinition = "TEXT", length = 1024)
     private String content;
 }
