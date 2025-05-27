@@ -12,6 +12,7 @@ import com.storysoksok.backend.domain.redis.MidPartFairyTale;
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
 import com.storysoksok.backend.dto.fairytale.request.SecondHalfFairyTaleRequest;
 import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
+import com.storysoksok.backend.dto.fairytale.response.FairyTaleResponse;
 import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
 import com.storysoksok.backend.dto.fairytale.response.SecondHalfFairyTaleResponse;
 import com.storysoksok.backend.exception.CustomException;
@@ -24,6 +25,7 @@ import com.storysoksok.backend.service.gpt.GptService;
 import com.storysoksok.backend.util.prompt.Prompt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -46,6 +48,8 @@ public class FairyTaleService {
     private final GptService gptService;
     private final static Integer FIRST_PAGE_NUM = 1;
     private final static Integer SECOND_HALF_PAGE_NUM = 5;
+    @Value("${fairy-tale.id}")
+    private UUID fairyTaleId;
 
     /**
      * 원하는 동화 중반까지 생성
@@ -367,6 +371,39 @@ public class FairyTaleService {
                 .memberName(m.getName())
                 .memberId(m.getMemberId())
                 .pageNum(pageNum)
+                .build();
+    }
+
+    /**
+     * 테스팅용 동화책 생성(하는 척)
+     */
+    @Transactional(readOnly = true)
+    public FairyTaleResponse getFairyTale(Integer pageNum) {
+        if (pageNum == null) {
+            throw new CustomException(ErrorCode.PAGE_OUT_OF_RANGE);
+        }
+
+        FairyTale fairyTale = fairyTaleRepository.findById(fairyTaleId).orElseThrow(
+                () -> {
+                    throw new CustomException(ErrorCode.NOT_FOUND_FAIRY_TALE);
+                }
+        );
+
+        FairyTaleImage fairyTaleImage = fairyTaleImageRepository.findByFairyTaleAndPageNum(fairyTale, pageNum);
+        FairyTaleStory fairyTaleStory = fairyTaleStoryRepository.findByFairyTaleAndPageNum(fairyTale, pageNum);
+
+        try {
+            Thread.sleep(4_000);  // 4초 (밀리초 단위)
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        return FairyTaleResponse.builder()
+                .fairyTaleId(fairyTaleId)
+                .content(fairyTaleStory.getContent())
+                .pageNum(pageNum)
+                .imageUrl(fairyTaleImage.getImageUrl())
+                .title(fairyTale.getTitle())
                 .build();
     }
 }

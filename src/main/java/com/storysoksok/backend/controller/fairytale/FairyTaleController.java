@@ -5,6 +5,7 @@ import com.storysoksok.backend.domain.postgre.member.Member;
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
 import com.storysoksok.backend.dto.fairytale.request.SecondHalfFairyTaleRequest;
 import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
+import com.storysoksok.backend.dto.fairytale.response.FairyTaleResponse;
 import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
 import com.storysoksok.backend.dto.fairytale.response.SecondHalfFairyTaleResponse;
 import com.storysoksok.backend.dto.oauth.request.CustomOAuth2User;
@@ -52,5 +53,11 @@ public class FairyTaleController implements FairyTaleControllerDocs {
                                                                                 @RequestBody @Valid SecondHalfFairyTaleRequest request) {
         Member member = customOAuth2User.getMember();
         return ResponseEntity.ok(firstFairyTale.secondHalfFairyTale(request,member));
+    }
+
+    @Override
+    @GetMapping("/fairy-tale/test/{page-num}")
+    public ResponseEntity<FairyTaleResponse> getFairyTaleTest(@PathVariable(value = "page-num") Integer pageNum) {
+        return ResponseEntity.ok(firstFairyTale.getFairyTale(pageNum));
     }
 }

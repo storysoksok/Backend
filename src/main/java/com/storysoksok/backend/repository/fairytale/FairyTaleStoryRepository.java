@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface FairyTaleStoryRepository extends JpaRepository<FairyTaleStory, UUID> {
     List<FairyTaleStory> findAllByFairyTaleOrderByPageNumAsc(FairyTale fairyTale);
 
+    FairyTaleStory findByFairyTaleAndPageNum(FairyTale fairyTale, Integer pageNum);
 }
