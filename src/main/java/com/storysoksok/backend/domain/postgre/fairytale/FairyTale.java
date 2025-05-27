@@ -23,12 +23,10 @@ public class FairyTale extends BasePostgresEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false, nullable = false)
     private UUID fairyTaleId;
-    @Lob
-    @Column
-    private String content;
     @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
     private String fairyTaleSubject;  // 동화주제
+    private String title;  // 동화책 이름
     private String fairyTaleCharacter;  // 동화 캐릭터
     private String fairyTaleLocation;  // 동화장소
 }

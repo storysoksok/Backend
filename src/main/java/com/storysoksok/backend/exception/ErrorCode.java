@@ -51,8 +51,16 @@ public enum ErrorCode {
 
     NOT_FOUND_FAIRY_TALE(HttpStatus.BAD_REQUEST, "동화책을 찾을 수 없습니다."),
 
+    INVALID_RECOMMEND_TYPE(HttpStatus.BAD_REQUEST, "후반부 이야기 선택지가 잘못되었습니다."),
+
+    PAGE_OUT_OF_RANGE(HttpStatus.INTERNAL_SERVER_ERROR, "페이지 번호의 범위가 잘못되었습니다."),
+
+    INSUFFICIENT_IMAGES(HttpStatus.BAD_REQUEST, "이미지 저장 개수가 잘못되었습니다."),
+
+    INVALID_PAGE_NUMBER(HttpStatus.BAD_REQUEST, "동화책은 총 8페이지입니다."),
+
     // S3
-    S3_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR ,"이미지 업로드중 에러가 발생했습니다.")
+    S3_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드중 에러가 발생했습니다."),
     ;
 
     private final HttpStatus status;
