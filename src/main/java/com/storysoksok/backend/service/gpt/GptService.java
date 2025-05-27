@@ -28,9 +28,9 @@ public class GptService {
     private final S3Service s3Service;
 
     /**
-     * 동화 중반부까지의 내용을 반환해주는 메서드
+     * 동화 이야기를 반환해주는 메서드
      */
-    public Optional<String> generateFirstFairyTale(String prompt) {
+    public Optional<String> generateFairyTale(String prompt) {
         ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
                 .model(model)
                 .addSystemMessage(prompt)

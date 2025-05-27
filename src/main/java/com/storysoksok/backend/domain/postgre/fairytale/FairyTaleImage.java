@@ -26,4 +26,5 @@ public class FairyTaleImage extends BasePostgresEntity {
     private String imageUrl;
     @ManyToOne(fetch = FetchType.LAZY)
     private FairyTale fairyTale;
+    private Integer pageNum;
 }

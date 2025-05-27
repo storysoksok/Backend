@@ -15,14 +15,16 @@ public class FirstFairyTaleResponse {
     private String memberName;
     private Integer pageNumber;
     private List<String> midPartFairyTaleStory;
+    private List<String> secondHalfRecommendStory;
     private String imageUrl;
     @Builder
-    public FirstFairyTaleResponse(UUID memberId, UUID midPartFairyTaleId, String memberName, Integer pageNumber, List<String> midPartFairyTaleStory, String imageUrl) {
+    public FirstFairyTaleResponse(UUID memberId, UUID midPartFairyTaleId, String memberName, Integer pageNumber, List<String> midPartFairyTaleStory, List<String> secondHalfRecommendStory, String imageUrl) {
         this.memberId = memberId;
         this.midPartFairyTaleId = midPartFairyTaleId;
         this.memberName = memberName;
         this.pageNumber = pageNumber;
         this.midPartFairyTaleStory = midPartFairyTaleStory;
+        this.secondHalfRecommendStory = secondHalfRecommendStory;
         this.imageUrl = imageUrl;
     }
 }
