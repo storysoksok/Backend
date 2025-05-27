@@ -377,7 +377,7 @@ public class FairyTaleService {
     /**
      * 테스팅용 동화책 생성(하는 척)
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public FairyTaleResponse getFairyTale(Integer pageNum) {
         if (pageNum == null) {
             throw new CustomException(ErrorCode.PAGE_OUT_OF_RANGE);
