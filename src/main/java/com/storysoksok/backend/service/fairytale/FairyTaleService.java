@@ -392,11 +392,11 @@ public class FairyTaleService {
         FairyTaleImage fairyTaleImage = fairyTaleImageRepository.findByFairyTaleAndPageNum(fairyTale, pageNum);
         FairyTaleStory fairyTaleStory = fairyTaleStoryRepository.findByFairyTaleAndPageNum(fairyTale, pageNum);
 
-//        try {
-//            Thread.sleep(4_000);  // 4초 (밀리초 단위)
-//        } catch (InterruptedException e) {
-//            Thread.currentThread().interrupt();
-//        }
+        try {
+            Thread.sleep(4_000);  // 4초 (밀리초 단위)
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         return FairyTaleResponse.builder()
                 .fairyTaleId(fairyTaleId)
