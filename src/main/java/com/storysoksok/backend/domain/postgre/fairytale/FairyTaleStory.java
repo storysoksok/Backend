@@ -25,6 +25,5 @@ public class FairyTaleStory extends BasePostgresEntity {
     private FairyTale fairyTale;
     private int pageNum;
     @Column(nullable = false, columnDefinition = "TEXT", length = 1024)
-    @Lob
     private String content;
 }
