@@ -30,7 +30,7 @@ public class GptService {
     /**
      * 동화 이야기를 반환해주는 메서드
      */
-    public Optional<String> generateFairyTale(String prompt) {
+    public Optional<String> chatWithChatBot(String prompt) {
         ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
                 .model(model)
                 .addSystemMessage(prompt)
