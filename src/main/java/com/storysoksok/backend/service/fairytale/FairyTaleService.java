@@ -92,7 +92,7 @@ public class FairyTaleService {
         /* 프롬프팅 시작 및 동화 내용 반환 */
         String prompt = this.prompt.firstFairyTaleFormat(map);
 
-        String firstStory = gptService.generateFairyTale(prompt).orElseThrow(()
+        String firstStory = gptService.chatWithChatBot(prompt).orElseThrow(()
                 -> {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         });
@@ -270,7 +270,7 @@ public class FairyTaleService {
 
         String prompt = this.prompt.secondHalfFairyTaleStory(midStoryList, secondHalfRecommendStory);
 
-        String secondStory = gptService.generateFairyTale(prompt).orElseThrow(()
+        String secondStory = gptService.chatWithChatBot(prompt).orElseThrow(()
                 -> {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         });
@@ -392,11 +392,11 @@ public class FairyTaleService {
         FairyTaleImage fairyTaleImage = fairyTaleImageRepository.findByFairyTaleAndPageNum(fairyTale, pageNum);
         FairyTaleStory fairyTaleStory = fairyTaleStoryRepository.findByFairyTaleAndPageNum(fairyTale, pageNum);
 
-        try {
-            Thread.sleep(4_000);  // 4초 (밀리초 단위)
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+//        try {
+//            Thread.sleep(4_000);  // 4초 (밀리초 단위)
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
 
         return FairyTaleResponse.builder()
                 .fairyTaleId(fairyTaleId)

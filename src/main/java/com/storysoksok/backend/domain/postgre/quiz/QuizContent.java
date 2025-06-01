@@ -1,30 +1,34 @@
-package com.storysoksok.backend.domain.postgre.fairytale;
+package com.storysoksok.backend.domain.postgre.quiz;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.storysoksok.backend.domain.postgre.BasePostgresEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
 
 @Entity
 @Getter
-@Setter
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class FairyTaleStory extends BasePostgresEntity {
+/**
+ * 퀴즈의 객관식 선택지 여부
+ */
+public class QuizContent extends BasePostgresEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false, nullable = false)
-    private UUID fairyTaleStoryId;
+    private UUID quizContent;
+
+    @Column(nullable = false)
+    private String content;  // 퀴즈 질문 (1. ... 2. ...)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private FairyTale fairyTale;
-    private int pageNum;
-    @Column(nullable = false, columnDefinition = "TEXT", length = 1024)
-    @Lob
-    private String content;
+    private Quiz quiz;
 }
