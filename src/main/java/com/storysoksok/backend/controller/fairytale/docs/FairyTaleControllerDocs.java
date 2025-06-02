@@ -2,14 +2,12 @@ package com.storysoksok.backend.controller.fairytale.docs;
 
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
 import com.storysoksok.backend.dto.fairytale.request.SecondHalfFairyTaleRequest;
-import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
-import com.storysoksok.backend.dto.fairytale.response.FairyTaleResponse;
-import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
-import com.storysoksok.backend.dto.fairytale.response.SecondHalfFairyTaleResponse;
+import com.storysoksok.backend.dto.fairytale.response.*;
 import com.storysoksok.backend.dto.oauth.request.CustomOAuth2User;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface FairyTaleControllerDocs {
@@ -192,6 +190,47 @@ public interface FairyTaleControllerDocs {
                     - 서버측에서 4초 대기 후 반환하도록 설계하였습니다.
                     """
     )
-    ResponseEntity<FairyTaleResponse> getFairyTaleTest(Integer pageNum);
+    ResponseEntity<FairyTaleTestResponse> getFairyTaleTest(Integer pageNum);
+
+    @Operation(
+            summary = "동화책 리스트업",
+            description = """
+                    회원이 작성·완성한 **모든 동화책** 목록을 반환합니다.
+
+                    ### 반환값
+                    * **memberId** (UUID) : 요청 회원 PK  
+                    * **fairyTaleId** (UUID) : 동화책(완성본) PK  
+                    * **title** (String) : 동화책 제목  
+                    * **createAt** (LocalDateTime) : 완성 시간 (ISO 8601)  
+                    * **firstImageUrl** (String) : 첫 페이지 이미지 URL  
+
+                    ### 유의사항
+                    * **Bearer JWT** 인증이 필요합니다.  
+                    * 리스트는 최신 생성일 순으로 정렬됩니다.  
+                    """
+    )
+    ResponseEntity<List<FairyTaleListResponse>> getFairyTaleList(CustomOAuth2User customOAuth2User);
+
+
+    @Operation(
+            summary = "동화책 상세정보",
+            description = """
+                    지정한 **동화책(완성본)** 의 스토리·이미지전체를 반환합니다.
+
+                    ### 반환값 (`FairyTaleResponse`)
+                    | 필드 | 타입 | 설명 |
+                    |------|------|------|
+                    | memberId | UUID | 요청 회원 PK |
+                    | fairyTaleId | UUID | 동화책(완성본) PK |
+                    | storyList | List&lt;String&gt; | 페이지 순서대로 정렬된 스토리 텍스트 |
+                    | imageList | List&lt;String&gt; | 페이지 순서대로 정렬된 이미지 URL |
+
+                    ### 유의사항
+                    * **Bearer JWT** 인증 필요  
+                    * `storyList[i]` 와 `imageList[i]` 는 같은 페이지를 의미합니다.
+                    """
+    )
+    ResponseEntity<FairyTaleResponse> getFairyTale(CustomOAuth2User customOAuth2User, UUID id);
+
 }
 
