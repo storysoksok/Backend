@@ -11,10 +11,7 @@ import com.storysoksok.backend.domain.postgre.member.Member;
 import com.storysoksok.backend.domain.redis.MidPartFairyTale;
 import com.storysoksok.backend.dto.fairytale.request.FairyTaleCreateRequest;
 import com.storysoksok.backend.dto.fairytale.request.SecondHalfFairyTaleRequest;
-import com.storysoksok.backend.dto.fairytale.response.FairyTaleImageResponse;
-import com.storysoksok.backend.dto.fairytale.response.FairyTaleResponse;
-import com.storysoksok.backend.dto.fairytale.response.FirstFairyTaleResponse;
-import com.storysoksok.backend.dto.fairytale.response.SecondHalfFairyTaleResponse;
+import com.storysoksok.backend.dto.fairytale.response.*;
 import com.storysoksok.backend.exception.CustomException;
 import com.storysoksok.backend.exception.ErrorCode;
 import com.storysoksok.backend.repository.fairytale.FairyTaleImageRepository;
@@ -378,7 +375,7 @@ public class FairyTaleService {
      * 테스팅용 동화책 생성(하는 척)
      */
     @Transactional
-    public FairyTaleResponse getFairyTale(Integer pageNum) {
+    public FairyTaleTestResponse getFairyTaleTest(Integer pageNum) {
         if (pageNum == null) {
             throw new CustomException(ErrorCode.PAGE_OUT_OF_RANGE);
         }
@@ -398,12 +395,54 @@ public class FairyTaleService {
             Thread.currentThread().interrupt();
         }
 
-        return FairyTaleResponse.builder()
+        return FairyTaleTestResponse.builder()
                 .fairyTaleId(fairyTaleId)
                 .content(fairyTaleStory.getContent())
                 .pageNum(pageNum)
                 .imageUrl(fairyTaleImage.getImageUrl())
                 .title(fairyTale.getTitle())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<FairyTaleListResponse> getFairyTaleList(Member member) {
+        List<FairyTale> fairyTaleList = fairyTaleRepository.findAllByMember(member);
+
+        return fairyTaleList.stream().map(
+                fairyTale -> {
+                    FairyTaleImage firstImage = fairyTaleImageRepository.findByFairyTaleAndPageNum(fairyTale, 1);
+
+                    return FairyTaleListResponse.builder()
+                            .createAt(fairyTale.getCreatedDate())
+                            .firstImageUrl(firstImage.getImageUrl())
+                            .title(fairyTale.getTitle())
+                            .fairyTaleId(fairyTale.getFairyTaleId())
+                            .memberId(member.getMemberId())
+                            .build();
+                }
+        ).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public FairyTaleResponse getFairyTale(Member member, UUID id) {
+        FairyTale fairyTale = fairyTaleRepository.findById(id).orElseThrow(
+                () -> {
+                    throw new CustomException(ErrorCode.NOT_FOUND_FAIRY_TALE);
+                }
+        );
+
+        List<FairyTaleImage> fairyTaleImageList = fairyTaleImageRepository.findAllByFairyTale(fairyTale);
+        List<FairyTaleStory> fairyTaleStoryList = fairyTaleStoryRepository.findAllByFairyTaleOrderByPageNumAsc(fairyTale);
+
+        List<String> imageList = fairyTaleImageList.stream().map(FairyTaleImage::getImageUrl).toList();
+        List<String> storyList = fairyTaleStoryList.stream().map(FairyTaleStory::getContent).toList();
+
+
+        return FairyTaleResponse.builder()
+                .fairyTaleId(fairyTale.getFairyTaleId())
+                .imageList(imageList)
+                .storyList(storyList)
+                .memberId(member.getMemberId())
                 .build();
     }
 }

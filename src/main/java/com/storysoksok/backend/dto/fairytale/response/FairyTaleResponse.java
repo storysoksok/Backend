@@ -4,22 +4,22 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 public class FairyTaleResponse {
+    private UUID memberId;
     private UUID fairyTaleId;
-    private String content;
-    private String imageUrl;
-    private String title;
-    private Integer pageNum;
+    private List<String> storyList;
+    private List<String> imageList;
+
     @Builder
-    public FairyTaleResponse(UUID fairyTaleId, String content, String imageUrl, String title, Integer pageNum) {
+    public FairyTaleResponse(UUID memberId, UUID fairyTaleId, List<String> storyList, List<String> imageList) {
+        this.memberId = memberId;
         this.fairyTaleId = fairyTaleId;
-        this.content = content;
-        this.imageUrl = imageUrl;
-        this.title = title;
-        this.pageNum = pageNum;
+        this.storyList = storyList;
+        this.imageList = imageList;
     }
 }
