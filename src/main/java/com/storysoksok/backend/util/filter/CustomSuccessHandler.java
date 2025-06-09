@@ -31,6 +31,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final RedisTemplate<String, Object> redisTemplate;
     @Value("${spring.security.app.redirect-uri.dev}")
     private String devRedirectUri;
+    @Value("${spring.security.app.redirect-uri.prod}")
+    private String prodRedirectUri;
     private static final String REFRESH_PREFIX = "RT:";
 
     @Override
@@ -57,14 +59,14 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String redirectUri = request.getParameter("redirectUri");
         if (redirectUri == null) {
             log.debug("로그인 시 요청된 Redirect URI가 없으므로 기본 경로로 설정합니다.");
-            redirectUri = "http://localhost:3000";  // TODO 프론트엔드 메인페이지 주소
+            redirectUri = prodRedirectUri;
         }
         response.addHeader("Authorization", "Bearer " + accessToken);
 
         /* ---------- redirect URI 구성 ---------- */
         String baseUri = Optional.ofNullable(request.getParameter("redirectUri"))
                 .filter(u -> !u.isBlank())
-                .orElse(devRedirectUri);
+                .orElse(prodRedirectUri);
 
         String tokenRedirectUri = UriComponentsBuilder.fromUriString(baseUri)
                 .queryParam("accessToken", URLEncoder.encode(accessToken, StandardCharsets.UTF_8))
