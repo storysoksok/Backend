@@ -66,7 +66,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         /* ---------- redirect URI 구성 ---------- */
         String baseUri = Optional.ofNullable(request.getParameter("redirectUri"))
                 .filter(u -> !u.isBlank())
-                .orElse(prodRedirectUri);
+//                .orElse(prodRedirectUri);
+                .orElse(devRedirectUri);
 
         String tokenRedirectUri = UriComponentsBuilder.fromUriString(baseUri)
                 .queryParam("accessToken", URLEncoder.encode(accessToken, StandardCharsets.UTF_8))
